@@ -1,5 +1,5 @@
 # SAP HANA, NodeJS & openUI5 on Cloudfoundry 
-<b>!!under consturcion!!</b><br />
+
 This tutorial shows you how to deploy an application which uses openUI5 as frontend, NodeJS as backend and SAP HANA as database.
 Regulary SAP and SAP databases need a huge landscape which is not really fast and needs a lot of customizations. A big advantage of this use case is the very fast SAP HANA database. We use it directly from our NodeJS backend without any middleware.
 Because of this architecture we're able to request our data really fast.
