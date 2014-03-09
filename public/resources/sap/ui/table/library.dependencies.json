@@ -1,0 +1,92 @@
+{
+  "modules" : [
+    {
+      "name" : "sap/ui/table/Column.js",
+      "description" : "Provides control sap.ui.table.Column.",
+      "size" : 40503,
+      "compressedSize" : 10370,
+      "required" : ["sap/ui/table/library.js", "sap/ui/core/Element.js", "sap/ui/core/RenderManager.js", "sap/ui/model/Type.js", "sap/ui/model/Filter.js", "sap/ui/model/Sorter.js", "sap/ui/commons/Image.js", "sap/ui/commons/Label.js", "sap/ui/commons/TextField.js", "sap/ui/model/type/String.js", "jquery.sap.global.js"],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/table/ColumnMenu.js",
+      "description" : "Provides control sap.ui.table.ColumnMenu.",
+      "size" : 12434,
+      "compressedSize" : 5247,
+      "required" : ["sap/ui/table/library.js", "sap/ui/commons/Menu.js", "sap/ui/core/RenderManager.js", "sap/ui/commons/MenuItem.js", "sap/ui/commons/TextField.js", "jquery.sap.global.js"],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/table/ColumnMenuRenderer.js",
+      "description" : "Provides default renderer for control sap.ui.commons.ComboBox",
+      "size" : 568,
+      "compressedSize" : 429,
+      "required" : ["sap/ui/core/Renderer.js", "sap/ui/commons/MenuRenderer.js", "jquery.sap.global.js"],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/table/DataTable.js",
+      "description" : "Provides control sap.ui.table.DataTable.",
+      "size" : 11203,
+      "compressedSize" : 2050,
+      "required" : ["sap/ui/table/library.js", "sap/ui/table/TreeTable.js", "jquery.sap.global.js"],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/table/DataTableRenderer.js",
+      "description" : "Provides default renderer for control sap.ui.table.DataTable",
+      "size" : 548,
+      "compressedSize" : 433,
+      "required" : ["sap/ui/core/Renderer.js", "sap/ui/table/TreeTableRenderer.js", "jquery.sap.global.js"],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/table/Row.js",
+      "description" : "Provides control sap.ui.table.Row.",
+      "size" : 6156,
+      "compressedSize" : 697,
+      "required" : ["sap/ui/table/library.js", "sap/ui/core/Element.js", "jquery.sap.global.js"],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/table/Table.js",
+      "description" : "Provides control sap.ui.table.Table.",
+      "size" : 168138,
+      "compressedSize" : 58259,
+      "required" : ["sap/ui/table/library.js", "sap/ui/core/Control.js", "sap/ui/model/SelectionModel.js", "sap/ui/core/delegate/ItemNavigation.js", "sap/ui/core/theming/Parameters.js", "sap/ui/core/ScrollBar.js", "sap/ui/core/IntervalTrigger.js", "sap/ui/commons/TextView.js", "sap/ui/table/Row.js", "jquery.sap.global.js"],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/table/TableRenderer.js",
+      "description" : "Provides default renderer for control sap.ui.table.Table",
+      "size" : 26217,
+      "compressedSize" : 17099,
+      "required" : ["jquery.sap.global.js"],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/table/TreeTable.js",
+      "description" : "Provides control sap.ui.table.TreeTable.",
+      "size" : 18397,
+      "compressedSize" : 7053,
+      "required" : ["sap/ui/table/library.js", "sap/ui/table/Table.js", "jquery.sap.global.js"],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/table/TreeTableRenderer.js",
+      "description" : "Provides default renderer for control sap.ui.table.TreeTable",
+      "size" : 834,
+      "compressedSize" : 653,
+      "required" : ["sap/ui/core/Renderer.js", "sap/ui/table/TableRenderer.js", "jquery.sap.global.js"],
+      "includes" : []
+    },
+    {
+      "name" : "sap/ui/table/library.js",
+      "description" : "Initialization Code and shared classes of library sap.ui.table (1.16.8-SNAPSHOT)",
+      "size" : 7955,
+      "compressedSize" : 1648,
+      "required" : ["sap/ui/core/Core.js", "sap/ui/core/library.js", "sap/ui/commons/library.js", "jquery.sap.global.js"],
+      "includes" : ["sap/ui/table/NavigationMode.js", "sap/ui/table/SelectionBehavior.js", "sap/ui/table/SelectionMode.js", "sap/ui/table/SortOrder.js", "sap/ui/table/VisibleRowCountMode.js"]
+    }
+  ]
+}

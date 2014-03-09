@@ -1,0 +1,11 @@
+doctype html
+html
+	head
+		title Hana Sample
+		script#sap-ui-bootstrap(src='resources/sap-ui-core.js', data-sap-ui-theme='sap_goldreflection', data-sap-ui-libs='sap.ui.commons, sap.ui.table')
+		script(type='text/javascript' src='scripts/layout.js')
+	body(data-url=locals.req_url)
+		.container_12
+			#header.grid_12
+			#content
+				block content

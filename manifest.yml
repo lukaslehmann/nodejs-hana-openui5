@@ -1,0 +1,10 @@
+---
+applications:
+- name: hdb-backend
+  memory: 256M
+  instances: 1
+  host: hdb-backend
+  path: .
+  command: node hdb_example.js
+  services:
+    - hana-onboarding
