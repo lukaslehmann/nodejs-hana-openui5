@@ -3,7 +3,6 @@ var express = require("express");
 var app = express()
   , server = require('http').createServer(app);
 var pool = require('./libs/pool.js');
-var util = require('util');
 
 //configure the express settings
 app.configure(function () {

@@ -2,10 +2,9 @@
 var gp = require('generic-pool');
 var hdb = require('hdb');
 
-parse the environement variables
 if(process.env.VCAP_SERVICES){
   //app is running in the cloud
-  //parse the environement variabels to get the credentials
+  // parse the environement variabels to get the credentials
   var svcs = JSON.parse(process.env.VCAP_SERVICES);
   var credentials = svcs['hanadb'][0].credentials;
   var options = {
@@ -19,11 +18,11 @@ if(process.env.VCAP_SERVICES){
 else{
   //local setup - credentials used if app is runnig local
   var options = {
-    host     : 'hana04.sap-cc.com',
+    host     : 'localhost/yourserver',
     port     : 30015,
     user     : 'username',
     password : 'password',
-    database : 'CFS_02C90190_FC5D_4D20_9625_BE2A5383A1A7'
+    database : 'schema'
    };
 }
 
@@ -45,7 +44,7 @@ var pool = gp.Pool({
         return callback(err);
       }
       //fuzzy search SQL statement
-      var sql = 'select TOP 30 TO_DECIMAL(SCORE(),3,2) AS score, * from ' + client._settings.database + '.CUSTOMERS2 where contains(token_text, ? , FUZZY(0.6)) ORDER BY score DESC';
+      var sql = 'select TOP 30 TO_DECIMAL(SCORE(),3,2) AS score, * from ' + client._settings.database + '.CUSTOMERS where contains(TA_TOKEN, ? , FUZZY(0.6)) ORDER BY score DESC';
         //prepare statement
         client.prepare(sql, function (err, statement){
           if (err) {
