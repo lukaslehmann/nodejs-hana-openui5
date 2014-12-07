@@ -17,19 +17,21 @@ There are two different types of tutorials:
 
 ## Kickstarter steps
 
-This is a short introduction on how to use this repository for advanced registered Swisscom Cloud developers.
+This is a short introduction on how to use this repository for advanced developers who have an account on the Swisscom AppCloud or on another CloudFoundry service provider.
 
-1. Clone the repository to your local environment
-2. Go into the directory
+1. Clone the repository to your local environment  
+"git clone https://github.com/lukaslehmann/nodejs-hana-openui5"
+2. Go into the directory - "cd nodejs-hana-openui5"
+3. Create a hanadb service - "cf cs hanadb free search"
 3. cf push
-5. Get the environment variables with cf logs (first part of response)
-4. Generate Fake Data
+4. Get the environment variables with "cf env hdb-backend-lukas"
+5. Generate Fake Data
   1. Install the SAP HANA Studio([Download Link](https://hanadeveditionsapicl.hana.ondemand.com/hanadevedition/))
   2. Download the Demo data([100'000 datasets](https://s3-eu-west-1.amazonaws.com/swisscom-its/us-100000.csv) or [1 Million datasets](https://s3-eu-west-1.amazonaws.com/swisscom-its/us-1000000.csv))
   3. Add the HANA System with the credentials you got in step 4. 
   4. Use the script create_hana_tables.sql to create the tables on your schema.
-  5. Import the downloaded csv into your SAP HANA studio via File->Import.
-5. Enjoy and donate! :)
+  5. Import the downloaded csv into your SAP HANA studio via File->Import(picture at the end).
+6. Enjoy and donate! :)
 
 ## Step by step tutorial
 Learn how to write and deploy a NodeJS application with SAP HANA and openUI5.
@@ -38,6 +40,7 @@ Requirements:
 * installed NodeJS([Download Link](http://nodejs.org/))
 * Installed the SAP HANA Studio([Download Link](https://hanadeveditionsapicl.hana.ondemand.com/hanadevedition/))
 * Downloaded the demodata([Download Link](https://s3-eu-west-1.amazonaws.com/swisscom-its/us-1000000.csv))
+* Account on a CloudFoundry Service Provider
 
 As a prestep we will create the folderstructure for a usual NodeJS project.<br />
 hana-example<br />
@@ -57,8 +60,8 @@ hana-example<br />
   "author": "Lukas Lehmann",
   "dependencies": {
     "express": "3.1.x",
-    "jade": "~1.0.2",    
-    "hdb": "0.2.X",
+    "hdb": "0.3.8",
+    "jade": "~1.0.2",
     "generic-pool": "~2.0.4"
   },
   "engines": {
@@ -72,19 +75,18 @@ hana-example<br />
 	within the console on the directory which we have created before.
 
 3. Now we can start with coding. Yay! As the main step we create all the functions we need to operate with HANA. For this we use the node module hdb, which we downloaded before.
-	Here we will set up here a connection pool for our database connection. In this step you can also see how to parse the database credentials for your SAP HANA Service. These credentials were saved in the environment variables of the container during the start. Now we'll prepare the SQL statement which we'll use later. Create the file pool.js with the following content:
+	Here we will set up here a connection pool for our database connection. In this step you can also see how to parse the database credentials for your SAP HANA Service. These credentials were saved in the environment variables of the container during the start. Now we'll prepare the SQL statement which we'll use later. Create the file pool.js under the lib folder with the following content:
 
 ```javascript
 //needed modules
 var gp = require('generic-pool');
 var hdb = require('hdb');
 
-//parse the environement variables
 if(process.env.VCAP_SERVICES){
   //app is running in the cloud
-  //parse the environement variabels to get the credentials
+  // parse the environement variabels to get the credentials
   var svcs = JSON.parse(process.env.VCAP_SERVICES);
-  var credentials = svcs['SAP HANA Database'][0].credentials;
+  var credentials = svcs['hanadb'][0].credentials;
   var options = {
     host     : credentials.hostname,
     port     : credentials.port,
@@ -96,12 +98,12 @@ if(process.env.VCAP_SERVICES){
 else{
   //local setup - credentials used if app is runnig local
   var options = {
-    host     : 'hana04.sap-cc.com',
+    host     : 'localhost/yourserver',
     port     : 30015,
-    user     : 'system',
-    password : 'YourPassword',
-    database : 'CFS_8B9C7967_CF19_4F0F_967C_56169AF28466'
-  };
+    user     : 'username',
+    password : 'password',
+    database : 'schema'
+   };
 }
 
 
@@ -111,23 +113,18 @@ var pool = gp.Pool({
   //descripe the create functions
   create: function create(callback) {
     var client = hdb.createClient(options);
+    client.hadError = false;
     //check errors
-    client.on('error', function onerror(err) {
+    client.once('error', function onerror(err) {
       console.error('Client error:', err);
+      client.hadError = true;
     });
-    // register for client close event
-    // this can happen on errors or connnection timeout
-    client.on('close', function onclose(hadError) {
-      console.log('Client closed');
-      // this will remove the client from availableObject of the pool
-      pool.destroy(client);
-    });    
     client.connect(function onconnect(err) {
       if (err) {
         return callback(err);
       }
       //fuzzy search SQL statement
-      var sql = 'select TOP 30 TO_DECIMAL(SCORE(),3,2) AS score, * from ' + client._settings.database + '.CUSTOMERS where contains((company_name, first_name, last_name), ? , FUZZY(0.5)) ORDER BY score DESC';
+      var sql = 'select TOP 30 TO_DECIMAL(SCORE(),3,2) AS score, * from ' + client._settings.database + '.CUSTOMERS where contains(TA_TOKEN, ? , FUZZY(0.6)) ORDER BY score DESC';
         //prepare statement
         client.prepare(sql, function (err, statement){
           if (err) {
@@ -144,17 +141,27 @@ var pool = gp.Pool({
   //describe the destroy function
   destroy: function destroy(client) {
     // if the client is already closed don't call end
-    if (client.readyState !== 'closed') {
+    if (!client.hadError && client.readyState !== 'closed') {
       client.end();      
     }
   },
+  // validate is called before a client is acquired from pool.
+  // If the client is not connected it should be removed from pool. 
+  validate: function validate(client) {
+    return (!client.hadError && client.readyState === 'connected');
+  },
   //max 5 con current connections - because of free plan
-  max: 5,
+  max: 30,
   //everytime min 1 connection to hdb should be open
   min: 1,
   //connection timeout 5 minutes
   idleTimeoutMillis: 300000,
   log: false
+});
+
+//handle object acquisition for hdb client
+var pooledFn = pool.pooled(function(client, arg, cb) {
+  cb(null, arg);
 });
 //export file as module
 exports = module.exports = pool;
@@ -167,20 +174,17 @@ exports = module.exports = pool;
 var express = require("express");
 var app = express()
   , server = require('http').createServer(app);
-var hdb    = require('hdb');
-var pool = require('./pool');
-var client = require('./client');
-var util = require('util');
+var pool = require('./libs/pool.js');
 
 //configure the express settings
 app.configure(function () {
+  //vies are in folder views
   app.set('views', __dirname + '/views'); 
+  //we use jade as view engine
   app.set('view engine', 'jade'); 
   app.use(app.router);
+  //all the scripts we need for the client UI are in folder public
   app.use(express.static(__dirname + '/public')); 
-  app.use(require('stylus').middleware({
-      src: __dirname + '/public'
-    }));
 });
 
 //set the ajax request URL
@@ -198,19 +202,8 @@ else{
 //start server, on CF use binded port
 var port = process.env.PORT || 3000;
 server.listen(port, function() {
-  console.log("Listening on " + port);
-  //aquire the pool from pool.js
-  pool.acquire(function (err, client) {
-      if (err) {
-        return badRequest(res, err);
-      }
-      function releaseClient(err) {
-        if (err) {
-          console.error('ObjectStream error', err);
-        }
-        pool.release(client);
-      }
-    });  
+  console.log("Listening on " + url + port);
+  console.log(pool.getPoolSize() + " running hdb clients");
 });
 
 //get main - index
@@ -221,6 +214,8 @@ app.get('/', function(req, res) {
 //return JSON for requests on app/search?name=
 app.get('/search', function(req, res){
   var name = req.query.name;
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With");
   //execute the prepared statement
   req_statement.exec([name], function (err, rows) {
     if (err) {
@@ -257,13 +252,13 @@ html
 var oAppHeader = new sap.ui.commons.ApplicationHeader("appHeader"); 
 //configure the branding area
 oAppHeader.setLogoSrc("http://www.res1.scsstatic.ch/etc/designs/header/clientlibs/publish/themes/default/resources/images/logo.png");
-oAppHeader.setLogoText("Zapf(HANA) Fuzzy Search Tutorial");
+oAppHeader.setLogoText("HANA Fuzzy Search Tutorial");
 oAppHeader.setDisplayWelcome(false);
 oAppHeader.setDisplayLogoff(false);
 oAppHeader.placeAt("header");	
 ```
 
-8. As we now have a layout, we can create the <b>index.jade</b> file which contains the main UI part of the application.
+8. As we now have a layout, we can create the <b>views/index.jade</b> file which contains the main UI part of the application.
 ```Haml
 extends layout
 block content
@@ -280,7 +275,7 @@ block content
 	a(href='mailto:lukas.lehmann@swisscom.com') Questions, improvements?
 ```
 
-9. The next step is to include the client side JavaScript for the newly created index.js file. In this code we create objects for the search input field, the button and the table. 
+9. The next step is to include the client side JavaScript for the newly created index.js file under the public/scripts folder. In this code we create objects for the search input field, the button and the table. 
 
 ```javascript
 //read URL for ajax request
@@ -423,6 +418,7 @@ oTable.placeAt("table");
 
 8. Congratulaions, you have finished the development! Now we can push the application to the Swisscom Cloud. Make sure that you're logged in(successful cf login). Use <b> cf push --command "node hdb_example.js" </b> to push the application to 
 the Swisscom environment. The parameter command starts the NodeJS server after a successful push. Be sure that you create a <b> SAP HANA Database service </b> while pushing.
+You can also run it locally with <b> node hdb_example.js </b>.
 
 9. Now we need to import sample data into our database so that we can test the application. Use the command <b>cf logs</b> to get the database credentials(shown in logs/env.log) or you can check your credentials under developer.swisscom.com. Make sure that you have installed SAP HANA Studio and downloaded the demo data(requirements). Open the HANA Studio and add a system with the credentials you got before(instance number: 00). Hint: To add a system, go to the system administrator view and use right click. You need to create the tables on your schema with this SQL script:
 
@@ -430,24 +426,25 @@ the Swisscom environment. The parameter command starts the NodeJS server after a
 SET SCHEMA <your schema>;
 
 CREATE COLUMN TABLE CUSTOMERS (
-	ID INTEGER NOT NULL,
-	FIRST_NAME varchar(250) NULL,
-	LAST_NAME varchar(250) NULL,	
-	COMPANY_NAME varchar(250) NULL,
-	ADDRESS varchar(250) NULL,
-	CITY varchar(250) NULL,		
-   	COUNTRY varchar(250) NULL,	
-	ZIP varchar(10) NULL,
-	PHONE varchar(30) NULL,	
-	EMAIL varchar(80) NULL,
-	WEB varchar(250) NULL
-   	 );
-   	 
-ALTER TABLE CUSTOMERS
-  ADD CONSTRAINT PK_CUSTOMERID PRIMARY KEY (ID);   	
+  ID INTEGER NOT NULL,
+  FIRST_NAME varchar(250) NULL,
+  LAST_NAME varchar(250) NULL,  
+  COMPANY_NAME varchar(250) NULL,
+  ADDRESS varchar(250) NULL,
+  CITY varchar(250) NULL,   
+    COUNTRY varchar(250) NULL,  
+  ZIP varchar(10) NULL,
+  PHONE varchar(30) NULL, 
+  EMAIL varchar(80) NULL,
+  WEB varchar(250) NULL,
+  TA_TOKEN varchar(500) NULL
+     );
+     
+-- fulltext search / optimized for fuzzy search
+Create FullText Index "FUZZY_SEARCH_INDEX" On "CUSTOMERS"("TA_TOKEN")
+FUZZY SEARCH INDEX ON
+FAST PREPROCESS on;
 
-CREATE INDEX COMPANY_NAME ON CUSTOMERS(COMPANY_NAME);   	
-CREATE INDEX SEARCH_INDEX ON CUSTOMERS(COMPANY_NAME, FIRST_NAME, LAST_NAME); 
 
 ```
 You can now import your data via <b>File->Import...->SAP HANA Content->Data from local file</b>.
